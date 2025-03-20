@@ -5,6 +5,6 @@
 - tkinter
 - pyperclip
 # 编译为exe
-'''
-nuitka --windows-disable-console --output-dir=./man pro.py
-'''
+```
+nuitka --windows-disable-console --output-dir=./man pro.py  
+```
