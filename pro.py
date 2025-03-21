@@ -3,6 +3,11 @@ import tkinter as tk
 from tkinter import filedialog, ttk
 import pyperclip
 import threading
+import os
+from concurrent.futures import ThreadPoolExecutor
+
+# 全局线程池，用于高性能设备的多线程处理
+executor = ThreadPoolExecutor(max_workers=os.cpu_count())
 
 def calculate_hash_file(file_path, algorithm, progress_callback=None):
     """计算文件的哈希值，并通过回调函数更新进度条"""
@@ -14,7 +19,7 @@ def calculate_hash_file(file_path, algorithm, progress_callback=None):
             f.seek(0, 0)  # 返回文件开头
             read_size = 0
             while True:
-                data = f.read(65536)  # 每次读取64KB
+                data = f.read(131072)  # 每次读取128KB，优化I/O操作
                 if not data:
                     break
                 hasher.update(data)
@@ -91,8 +96,12 @@ def compare_two_files():
         root.after(0, lambda: compare_result_var.set("请选择哈希算法！"))
         return
 
-    hash_1 = calculate_hash_file(file1_path, selected_algorithm)
-    hash_2 = calculate_hash_file(file2_path, selected_algorithm)
+    # 使用线程池并行计算两个文件的哈希值
+    future1 = executor.submit(calculate_hash_file, file1_path, selected_algorithm, None)
+    future2 = executor.submit(calculate_hash_file, file2_path, selected_algorithm, None)
+
+    hash_1 = future1.result()
+    hash_2 = future2.result()
 
     if hash_1 == hash_2:
         result = "对比结果：一致，两个文件内容完全相同！"
